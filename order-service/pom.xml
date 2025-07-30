@@ -77,6 +77,10 @@
 			<artifactId>mysql</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>io.rest-assured</groupId>
+			<artifactId>rest-assured</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -105,6 +109,10 @@
 					</excludes>
 				</configuration>
 			</plugin>
+			<plugin>
+      			<groupId>org.flywaydb</groupId>
+      			<artifactId>flyway-maven-plugin</artifactId>
+    		</plugin>
 		</plugins>
 	</build>
 
