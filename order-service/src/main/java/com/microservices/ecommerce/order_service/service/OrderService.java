@@ -2,10 +2,12 @@ package com.microservices.ecommerce.order_service.service;
 
 import java.util.UUID;
 
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import com.microservices.ecommerce.order_service.client.InventoryClient;
 import com.microservices.ecommerce.order_service.dto.OrderRequest;
+import com.microservices.ecommerce.order_service.event.OrderPlacedEvent;
 import com.microservices.ecommerce.order_service.model.Order;
 import com.microservices.ecommerce.order_service.repo.OrderRepository;
 
@@ -19,6 +21,7 @@ public class OrderService {
 	
 	private final OrderRepository orderRepository;
 	private final InventoryClient inventoryClient;
+	private final KafkaTemplate<String, OrderPlacedEvent> kafkaTemplate;
 	
 	public void placeOrder(OrderRequest orderRequest) {
 		boolean isProductInStock = inventoryClient.isInStock(orderRequest.skuCode(), orderRequest.quantity());
@@ -31,7 +34,12 @@ public class OrderService {
 			order.setQuantity(orderRequest.quantity());
 		
 			orderRepository.save(order);
-		
+			
+			// Send message to Kafka topic
+			OrderPlacedEvent orderPlacedEvent = new OrderPlacedEvent(order.getOrderNumber(), orderRequest.userDetails().email());
+			log.info("Start sending message to kafka topic: {}", orderPlacedEvent);
+			kafkaTemplate.sendDefault(orderPlacedEvent);
+			log.info("End of sending message to kafka topic: {}", orderPlacedEvent);
 			log.info("Order placed successfully.");
 		} else {
 			throw new RuntimeException("Product with skuCode" + orderRequest.skuCode() + "is out of stock");
