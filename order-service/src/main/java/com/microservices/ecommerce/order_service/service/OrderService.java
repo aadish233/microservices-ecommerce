@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.microservices.ecommerce.order_service.client.InventoryClient;
 import com.microservices.ecommerce.order_service.dto.OrderRequest;
 import com.microservices.ecommerce.order_service.model.Order;
 import com.microservices.ecommerce.order_service.repo.OrderRepository;
@@ -17,17 +18,23 @@ import lombok.extern.slf4j.Slf4j;
 public class OrderService {
 	
 	private final OrderRepository orderRepository;
+	private final InventoryClient inventoryClient;
 	
 	public void placeOrder(OrderRequest orderRequest) {
-		// map OrderRequest to Order
-		Order order = new Order();
-		order.setOrderNumber(UUID.randomUUID().toString());
-		order.setPrice(orderRequest.price());
-		order.setSkuCode(orderRequest.skuCode());
-		order.setQuantity(orderRequest.quantity());
+		boolean isProductInStock = inventoryClient.isInStock(orderRequest.skuCode(), orderRequest.quantity());
+		if(isProductInStock) {
+			// map OrderRequest to Order
+			Order order = new Order();
+			order.setOrderNumber(UUID.randomUUID().toString());
+			order.setPrice(orderRequest.price());
+			order.setSkuCode(orderRequest.skuCode());
+			order.setQuantity(orderRequest.quantity());
 		
-		orderRepository.save(order);
+			orderRepository.save(order);
 		
-		log.info("Order placed successfully.");
+			log.info("Order placed successfully.");
+		} else {
+			throw new RuntimeException("Product with skuCode" + orderRequest.skuCode() + "is out of stock");
+		}
 	}
 }

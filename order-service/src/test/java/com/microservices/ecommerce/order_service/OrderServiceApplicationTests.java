@@ -9,14 +9,18 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+
+import com.microservices.ecommerce.order_service.stub.InventoryClientStub;
 
 import io.restassured.RestAssured;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@AutoConfigureWireMock(port = 0)
 class OrderServiceApplicationTests {
 	@ServiceConnection
 	static MySQLContainer<?> mySQLContainer = new MySQLContainer<>(DockerImageName.parse("mysql:8.3.0"));
@@ -39,11 +43,13 @@ class OrderServiceApplicationTests {
 	void shouldPlaceOrder() {
 		String orderRequest = """
 				{
-					"skuCode": "SKU1",
-					"quantity": 101,
+					"skuCode": "iphone_15",
+					"quantity": 1,
 					"price": 1200
 				}
 				""";
+		
+		InventoryClientStub.stubInventoryCall("iphone_15", 1);
 		
 		String responseString = RestAssured.given()
 				.contentType("application/json")
