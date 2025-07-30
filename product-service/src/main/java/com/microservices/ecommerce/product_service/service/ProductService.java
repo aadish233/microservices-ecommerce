@@ -1,7 +1,6 @@
 package com.microservices.ecommerce.product_service.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
